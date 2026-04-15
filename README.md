@@ -50,29 +50,11 @@ You can use this code as a basis to:
 
 When complete, this application will have the following features:
 
-* For users that are not logged in, no new features are available.
-* For users that are logged in, they will see a new menu dropdown called Tables,
-  and under it will be menu items for each of the tables that was implemented in the 
-  application (e.g. some subset of `UCSBDiningCommonsMenuItem`, `UCSBOrganization` `RecommendationRequest`,`MenuItemReview`,`HelpRequest`, and `Articles`).
-* For users that are logged in, but are not admins, each of these menu items takes them to
-  an "index" page for that database table, where they see a list of all of the database
-  records for that table in table form.  The index page, in this case, will not have a button
-  to create database records, and it will not have buttons for Edit and Delete; only Show.
-* The Show button will take the user to a page where they see only one record from the database
-  table.
-* For users that are logged in as admins, they will also see a button on the index page that
-  takes them to a page where they can create a new record in the database.  That page, when the
-  user successfully creates a record, or cancels creating a record, 
-  should navigate back to the index page.
-* For users that are logged in as admins, in addition to the Show button, 
-  they will also see a button on the index page that
-  beside each row for Edit, and Delete.
-* The Edit button, for admins, will navigate to a page where the database record can be edited.
-  After a successful edit, the page will navigate back to the index page.
-* The Delete button, for admins, will make the api call to delete the row, and then 
-  navigate back to the index page.
-
-
+* An endpoint to POST each entity type to the database
+* An endpoint to GET each entity type from the database
+* An endpoint to PUT each entity type in the database
+* An endpoint to DELETE each entity type from the database
+* An endpoint to GET a list of all entity types from the database
 # Setup before running application
 
 Before running the application for the first time,

@@ -235,11 +235,13 @@ jobs:
                           issue_counts[column][assignee] += 1
               else:
                   #print(f"No column field found for item: {item['id']}")
+                  pass
 
           for column in issue_counts:
               #print(f"Column: {column}")
               for assignee in issue_counts[column]:
                   #print(f"  Assignee: {assignee}, Count: {issue_counts[column][assignee]}")
+                  pass
 
           issue_counts_json = json.dumps(issue_counts, indent=2)
           #print(f"Issue Counts JSON: {issue_counts_json}")

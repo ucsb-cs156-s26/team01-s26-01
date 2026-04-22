@@ -179,7 +179,7 @@ jobs:
       - name: Output GraphQL Query Result
         id: output_query
         env:
-          PAT: ${{ secrets.PAT }}
+          PAT: ${{ secrets.CLASSIC_PAT }}
         run: |
           ls
           PROJECT_ID=$(cat project_id.txt)

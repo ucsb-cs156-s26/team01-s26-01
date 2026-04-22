@@ -101,6 +101,8 @@ jobs:
       project_id: ${{ steps.find_project.outputs.project_id }}
       project_data: ${{ steps.output_query.outputs.project_data }}
       issue_counts: ${{ steps.count_issues.outputs.issue_counts }}
+    env:
+      REPOSITORY: ${{ needs.get_team_name.outputs.repository }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -109,33 +111,69 @@ jobs:
           echo "needs.get_team_name.outputs.team=${{needs.get_team_name.outputs.team}}"
           echo "needs.get_team_name.outputs.repository=${{needs.get_team_name.outputs.repository}}"
           echo "github.repository_owner=${{ github.repository_owner }}"
-      - name: Fetch Project ID
-        id: find_project
+      - name: Fetch Project Id using gh
+        id: find_project_gh
         run: |
-          GQL_QUERY="{ organization(login: \"${{ github.repository_owner }}\") { projectsV2(first: 100) { nodes { id title updatedAt } } } }"
-          QUERY=$(jq -nc --arg q "$GQL_QUERY" '{"query": $q}')
-          RESPONSE=$(curl -s -X POST \
-            -H "Authorization: Bearer ${{ secrets.PAT }}" \
-            -H "Content-Type: application/json" \
-            -d "$QUERY" \
-            https://api.github.com/graphql)
-          echo "Projects JSON Output: $RESPONSE"
+          # -e: exit immediately if any command fails (non-zero), instead of continuing
+          # -u: treat unset variables as errors to catch typos/missing env vars
+          # -o pipefail: pipelines fail if any command in the pipe fails (not just the last)
+          set -euo pipefail
 
-          REPO_NAME="${{ needs.get_team_name.outputs.repository }}"
-          PROJECT_ID=$(echo "$RESPONSE" | jq -r --arg repo "$REPO_NAME" \
-            '.data.organization.projectsV2.nodes[] | select(.title | contains($repo)) | .id' | head -1)
+          ORG_LOGIN="${{ github.repository_owner }}"
+          PROJECT_TITLE=${{ needs.get_team_name.outputs.repository }}
 
-          if [ -z "$PROJECT_ID" ]; then
-            echo "No project found named $REPO_NAME."
+          # Query first 100 projects; paginate if you might have more than 100.
+          PROJECT_ID="$(
+            gh api graphql -f query='
+              query($org: String!, $first: Int!) {
+                organization(login: $org) {
+                  projectsV2(first: $first) {
+                    nodes { id title }
+                  }
+                }
+              }' \
+              -f org="$ORG_LOGIN" \
+              -F first=100 \
+              --jq ".data.organization.projectsV2.nodes[] | select(.title == \"$PROJECT_TITLE\") | .id"
+          )"
+
+          if [[ -z "${PROJECT_ID}" ]]; then
+            echo "ERROR: No project titled '$PROJECT_TITLE' found in org '$ORG_LOGIN'." >&2
             exit 1
           fi
 
-          echo "Found Project ID: $PROJECT_ID"
-          echo "project_id=$PROJECT_ID"
+          echo "PROJECT_ID=$PROJECT_ID"
           echo "$PROJECT_ID" >> project_id.txt
           ls project_id.txt
           cat project_id.txt
-          pwd
+          pwd  
+      # - name: Fetch Project ID
+      #   id: find_project
+      #   run: |
+      #     GQL_QUERY="{ organization(login: \"${{ github.repository_owner }}\") { projectsV2(first: 100) { nodes { id title updatedAt } } } }"
+      #     QUERY=$(jq -nc --arg q "$GQL_QUERY" '{"query": $q}')
+      #     RESPONSE=$(curl -s -X POST \
+      #       -H "Authorization: Bearer ${{ secrets.PAT }}" \
+      #       -H "Content-Type: application/json" \
+      #       -d "$QUERY" \
+      #       https://api.github.com/graphql)
+      #     echo "Projects JSON Output: $RESPONSE"
+
+      #     REPO_NAME="${{ needs.get_team_name.outputs.repository }}"
+      #     PROJECT_ID=$(echo "$RESPONSE" | jq -r --arg repo "$REPO_NAME" \
+      #       '.data.organization.projectsV2.nodes[] | select(.title | contains($repo)) | .id' | head -1)
+
+      #     if [ -z "$PROJECT_ID" ]; then
+      #       echo "No project found named $REPO_NAME."
+      #       exit 1
+      #     fi
+
+      #     echo "Found Project ID: $PROJECT_ID"
+      #     echo "project_id=$PROJECT_ID"
+      #     echo "$PROJECT_ID" >> project_id.txt
+      #     ls project_id.txt
+      #     cat project_id.txt
+      #     pwd
        
       - name: Output GraphQL Query Result
         id: output_query

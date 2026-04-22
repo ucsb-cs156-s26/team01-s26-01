@@ -259,8 +259,8 @@ jobs:
           with open('issue_counts.json', 'w') as f:
               f.write(issue_counts_json)
 
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"issue_counts={issue_counts_json}\n")
+          # with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+          #     f.write(f"issue_counts={issue_counts_json}\n")
 
           print("Issue count process completed")      
       - name: Display issue_counts.json for debugging

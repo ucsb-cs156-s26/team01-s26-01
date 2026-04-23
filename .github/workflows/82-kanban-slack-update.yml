@@ -393,8 +393,7 @@ jobs:
           def get_team_to_channel_id(prefix, token):
             channels = lookupChannels(prefix, token)
             print(f"Channels found with prefix '{prefix}': {channels}")
-            return {}
-            #return {channel['name']: channel['id'] for channel in channels}
+            return channels
           
           qxx = os.getenv("qxx")
           token = os.environ.get("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
@@ -402,8 +401,7 @@ jobs:
               raise EnvironmentError("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN is not set.")
 
           print(f"Looking up channels with prefix '{qxx}' using provided token of length {len(token)}")    
-          # d = get_team_to_channel_id(qxx, token)
-          d = {}
+          d = get_team_to_channel_id(qxx, token)
           json.dump(
             d,
             open("team_to_channel.json", "w"),

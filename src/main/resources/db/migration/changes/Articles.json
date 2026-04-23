@@ -3,7 +3,7 @@
     {
       "changeSet": {
         "id": "Articles-1",
-        "author": "YourGitHubID",
+        "author": "Junyixi",
         "preConditions": [
           {
             "onFail": "MARK_RAN"

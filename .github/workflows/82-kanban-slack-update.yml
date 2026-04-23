@@ -361,15 +361,45 @@ jobs:
           pip install requests slack_sdk
 
           TEAM_TO_CHANNEL_JSON="$(python - <<'PY'
-          import json, os
-          import slack_bot_lookup_channels
+          import os
+          import json
+          from slack_sdk import WebClient
+          from slack_sdk.errors import SlackApiError
 
+          def lookupChannels(prefix, token):
+            """
+            Creates a new public Slack channel with the given name.
+
+            Parameters:
+            - channelName (str): The name of the new public channel to be created.
+            - token (str): The OAuth token for the Slack API.
+            Returns:
+            - dict: A dictionary mapping channel names to their corresponding channel IDs.
+            """
+            
+            client = WebClient(token=token)
+            channels = {}
+            try:
+              # Call the conversations.list method using the WebClient
+              result = client.conversations_list(types="public_channel")
+              for channel in result["channels"]:
+                name = channel["name"]
+                if name.startswith(prefix):
+                  channels[name] = channel["id"]
+            except SlackApiError as e:
+              print(f"Error fetching channels: {e.response['error']}")
+            return channels
+
+          def get_team_to_channel_id(prefix, token):
+            channels = lookupChannels(prefix, token)
+            return {channel['name']: channel['id'] for channel in channels}
+          
           qxx = os.getenv("qxx")
           token = os.environ.get("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
           if not token:
               raise EnvironmentError("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN is not set.")
 
-          d = slack_bot_lookup_channels.get_team_to_channel_id(qxx, token)
+          d = get_team_to_channel_id(qxx, token)
           print(json.dumps(d, separators=(",", ":")))
           PY
           )"

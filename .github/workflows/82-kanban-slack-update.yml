@@ -400,6 +400,7 @@ jobs:
           if not token:
               raise EnvironmentError("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN is not set.")
 
+          print(f"Looking up channels with prefix '{qxx}' using provided token of length {len(token)}")    
           d = get_team_to_channel_id(qxx, token)
           print(json.dumps(d, separators=(",", ":")))
           PY

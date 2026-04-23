@@ -7,6 +7,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RepositoryRestResource(exported = false)
-public interface ArticleRepository extends CrudRepository<Article, Long> {
-}
-
+public interface ArticleRepository extends CrudRepository<Article, Long> {}

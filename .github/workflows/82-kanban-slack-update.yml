@@ -402,14 +402,15 @@ jobs:
               raise EnvironmentError("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN is not set.")
 
           print(f"Looking up channels with prefix '{qxx}' using provided token of length {len(token)}")    
-          d = get_team_to_channel_id(qxx, token)
+          # d = get_team_to_channel_id(qxx, token)
+          d = {}
           json.dump(
             d,
             open("team_to_channel.json", "w"),
             separators=(",", ":")
           )
           PY
-          )"
+       
 
           TEAM_TO_CHANNEL_JSON=$(cat team_to_channel.json)
           echo "Computed TEAM_TO_CHANNEL JSON: $TEAM_TO_CHANNEL_JSON"

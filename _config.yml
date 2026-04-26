@@ -23,4 +23,4 @@ repo_name: "TBD"
 repo: ucsb-cs156-s26/team01-s26-01
 owner: ucsb-cs156-s26
 repo_name: team01-s26-01
-pull_requests: [{"author":{"id":"U_kgDOB2kI4w","is_bot":false,"login":"Junyixi","name":"schen"},"headRefName":"Shanqin-Articles-create-controller","number":48,"title":"Shanqin articles create controller","url":"https://github.com/ucsb-cs156-s26/team01-s26-01/pull/48"},{"author":{"id":"U_kgDOCeYN-A","is_bot":false,"login":"Protocol-X3","name":"Whisper"},"headRefName":"Whisper-controller","number":46,"title":"Whisper - add controller file and test file for UCSBDiningcommonsMenuItem","url":"https://github.com/ucsb-cs156-s26/team01-s26-01/pull/46"}]
+pull_requests: [{"author":{"id":"U_kgDOCeYN-A","is_bot":false,"login":"Protocol-X3","name":"Whisper"},"headRefName":"Whisper-controller","number":46,"title":"Whisper - add controller file and test file for UCSBDiningcommonsMenuItem","url":"https://github.com/ucsb-cs156-s26/team01-s26-01/pull/46"}]

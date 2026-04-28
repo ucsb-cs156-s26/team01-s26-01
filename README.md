@@ -3,14 +3,14 @@
 Deployments:<https://team01-andy-org.dokku-01.cs.ucsb.edu/>
 
 
-| Table                     | Name         | Github Id |
-|---------------------------|--------------|-----------|
-| UCSBDiningCommonsMenuItem |              |           |
-| UCSBOrganization          |              |           |
-| RecommendationRequest     |              |           |
-| MenuItemReview            |   Oscar V.   |oscarv06-cs|
-| HelpRequest               |              |           |
-| Articles                  |   Shanqin C. |  Junyixi  |
+| Table                     | Name       | Github Id  |
+|---------------------------|------------|------------|
+| UCSBDiningCommonsMenuItem | Whisper X. |Protocol-X3 |
+| UCSBOrganization          | Andy W.    | a-Fat-Cat  |
+| RecommendationRequest     | Binghao C. |Yinwu-Jinliu|
+| MenuItemReview            | Oscar V.   |oscarv06-cs |
+| HelpRequest               | Sherwin R. |  surew1n   |
+| Articles                  | Shanqin C. |  Junyixi   |
 
 Remember though, that in spite of these initial  assignments, it is still
 a team project.  Please help other team members to finish their work

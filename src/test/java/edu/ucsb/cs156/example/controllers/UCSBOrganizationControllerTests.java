@@ -131,7 +131,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
             .andReturn();
 
     // assert
-    verify(ucsbOrganizationRepository, times(1)).save(cs);
+    verify(ucsbOrganizationRepository, times(1)).save(eq(cs));
     String expectedJson = mapper.writeValueAsString(cs);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);

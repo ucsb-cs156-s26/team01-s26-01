@@ -37,12 +37,6 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
         .andExpect(status().is(403)); // logged out users can't get all
   }
 
-  @WithMockUser(roles = {"USER"})
-  @Test
-  public void logged_in_users_can_get_all() throws Exception {
-    mockMvc.perform(get("/api/UCSBOrganization/all")).andExpect(status().is(200)); // logged
-  }
-
   // Authorization tests for /api/ucsborganizationpost
   // (Perhaps should also have these for put and delete)
   @Test
@@ -72,36 +66,6 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
         .andExpect(status().is(403)); // only admins can post
   }
 
-  @WithMockUser(roles = {"USER"})
-  @Test
-  public void logged_in_user_can_get_all_ucsborganizations() throws Exception {
-
-    // arrange
-    UCSBOrganization cs =
-        UCSBOrganization.builder()
-            .orgCode("CSClub")
-            .orgTranslationShort("CSC")
-            .orgTranslation("Computer Science Club")
-            .inactive(false)
-            .build();
-
-    ArrayList<UCSBOrganization> expectedOrganizations = new ArrayList<>();
-    expectedOrganizations.add(cs);
-
-    when(ucsbOrganizationRepository.findAll()).thenReturn(expectedOrganizations);
-
-    // act
-    MvcResult response =
-        mockMvc.perform(get("/api/UCSBOrganization/all")).andExpect(status().isOk()).andReturn();
-
-    // assert
-    verify(ucsbOrganizationRepository, times(1)).findAll();
-    String expectedJson = mapper.writeValueAsString(expectedOrganizations);
-
-    String responseString = response.getResponse().getContentAsString();
-    assertEquals(expectedJson, responseString);
-  }
-
   @WithMockUser(roles = {"ADMIN", "USER"})
   @Test
   public void an_admin_user_can_post_a_new_organization() throws Exception {
@@ -113,7 +77,15 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
             .inactive(true)
             .build();
 
-    when(ucsbOrganizationRepository.save(eq(cs))).thenReturn(cs);
+    UCSBOrganization savedCs =
+        UCSBOrganization.builder()
+            .orgCode("CSClub")
+            .orgTranslationShort("CSC Saved")
+            .orgTranslation("Computer Science Club Saved")
+            .inactive(true)
+            .build();
+
+    when(ucsbOrganizationRepository.save(eq(cs))).thenReturn(savedCs);
 
     MvcResult response =
         mockMvc
@@ -129,7 +101,33 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
 
     verify(ucsbOrganizationRepository, times(1)).save(cs);
 
-    String expectedJson = mapper.writeValueAsString(cs);
+    String expectedJson = mapper.writeValueAsString(savedCs);
+    String responseString = response.getResponse().getContentAsString();
+    assertEquals(expectedJson, responseString);
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void logged_in_user_can_get_all_ucsborganizations() throws Exception {
+    UCSBOrganization cs =
+        UCSBOrganization.builder()
+            .orgCode("CSClub")
+            .orgTranslationShort("CSC")
+            .orgTranslation("Computer Science Club")
+            .inactive(false)
+            .build();
+
+    ArrayList<UCSBOrganization> expectedOrganizations = new ArrayList<>();
+    expectedOrganizations.add(cs);
+
+    when(ucsbOrganizationRepository.findAll()).thenReturn(expectedOrganizations);
+
+    MvcResult response =
+        mockMvc.perform(get("/api/UCSBOrganization/all")).andExpect(status().isOk()).andReturn();
+
+    verify(ucsbOrganizationRepository, times(1)).findAll();
+
+    String expectedJson = mapper.writeValueAsString(expectedOrganizations);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);
   }

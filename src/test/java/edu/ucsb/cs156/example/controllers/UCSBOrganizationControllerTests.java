@@ -34,13 +34,9 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
 
   @Test
   public void logged_out_users_cannot_get_all() throws Exception {
-    mockMvc
-        .perform(get("/api/UCSBOrganization/all"))
-        .andExpect(status().is(403)); // logged out users can't get all
+    mockMvc.perform(get("/api/UCSBOrganization/all")).andExpect(status().is(403));
   }
 
-  // Authorization tests for /api/ucsborganizationpost
-  // (Perhaps should also have these for put and delete)
   @Test
   public void logged_out_users_cannot_post() throws Exception {
     mockMvc
@@ -65,7 +61,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
                 .param("orgTranslation", "Computer Science Club")
                 .param("inactive", "false")
                 .with(csrf()))
-        .andExpect(status().is(403)); // only admins can post
+        .andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"ADMIN", "USER"})
@@ -136,27 +132,22 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
 
   @Test
   public void logged_out_users_cannot_get_by_id() throws Exception {
-    mockMvc
-        .perform(get("/api/UCSBOrganization").param("code", "cs"))
-        .andExpect(status().is(403)); // logged out users can't get by id
+    mockMvc.perform(get("/api/UCSBOrganization").param("code", "cs")).andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"USER"})
   @Test
   public void test_that_logged_in_user_can_get_by_id_when_the_id_does_not_exist() throws Exception {
-
-    // arrange
     when(ucsbOrganizationRepository.findById(eq("cs"))).thenReturn(Optional.empty());
 
-    // act
     MvcResult response =
         mockMvc
             .perform(get("/api/UCSBOrganization").param("code", "cs"))
             .andExpect(status().isNotFound())
             .andReturn();
 
-    // assert
     verify(ucsbOrganizationRepository, times(1)).findById(eq("cs"));
+
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
     assertEquals("UCSBOrganization with id cs not found", json.get("message"));
@@ -165,8 +156,6 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"USER"})
   @Test
   public void test_that_logged_in_user_can_get_by_id_when_the_id_does_exist() throws Exception {
-
-    // arrange
     UCSBOrganization cs =
         UCSBOrganization.builder()
             .orgCode("CSClub")
@@ -174,17 +163,17 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
             .orgTranslation("Computer Science Club")
             .inactive(true)
             .build();
+
     when(ucsbOrganizationRepository.findById(eq("CSClub"))).thenReturn(Optional.of(cs));
 
-    // act
     MvcResult response =
         mockMvc
             .perform(get("/api/UCSBOrganization").param("code", "CSClub"))
             .andExpect(status().isOk())
             .andReturn();
 
-    // assert
     verify(ucsbOrganizationRepository, times(1)).findById(eq("CSClub"));
+
     String expectedJson = mapper.writeValueAsString(cs);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);

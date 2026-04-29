@@ -119,15 +119,10 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
             .inactive(false)
             .build();
 
-    UCSBOrganization savedCs =
-        UCSBOrganization.builder()
-            .orgCode("CSClub")
-            .orgTranslationShort("CSC Saved")
-            .orgTranslation("Computer Science Club Saved")
-            .inactive(true)
-            .build();
+    ArrayList<UCSBOrganization> expectedOrganizations = new ArrayList<>();
+    expectedOrganizations.add(cs);
 
-    when(ucsbOrganizationRepository.save(eq(cs))).thenReturn(savedCs);
+    when(ucsbOrganizationRepository.findAll()).thenReturn(expectedOrganizations);
 
     MvcResult response =
         mockMvc.perform(get("/api/UCSBOrganization/all")).andExpect(status().isOk()).andReturn();

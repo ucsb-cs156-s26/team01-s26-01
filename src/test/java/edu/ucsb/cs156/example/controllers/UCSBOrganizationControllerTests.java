@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @WebMvcTest(controllers = UCSBOrganizationController.class)
 @Import(TestConfig.class)
 public class UCSBOrganizationControllerTests extends ControllerTestCase {
+
   @MockitoBean UCSBOrganizationRepository ucsbOrganizationRepository;
 
   @MockitoBean UserRepository userRepository;
@@ -44,7 +45,6 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
 
   // Authorization tests for /api/ucsborganizationpost
   // (Perhaps should also have these for put and delete)
-
   @Test
   public void logged_out_users_cannot_post() throws Exception {
     mockMvc
@@ -77,7 +77,6 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
   public void logged_in_user_can_get_all_ucsborganizations() throws Exception {
 
     // arrange
-
     UCSBOrganization cs =
         UCSBOrganization.builder()
             .orgCode("CSClub")
@@ -96,7 +95,6 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
         mockMvc.perform(get("/api/UCSBOrganization/all")).andExpect(status().isOk()).andReturn();
 
     // assert
-
     verify(ucsbOrganizationRepository, times(1)).findAll();
     String expectedJson = mapper.writeValueAsString(expectedOrganizations);
 
@@ -107,17 +105,16 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN", "USER"})
   @Test
   public void an_admin_user_can_post_a_new_organization() throws Exception {
-    // arrange
     UCSBOrganization cs =
         UCSBOrganization.builder()
             .orgCode("CSClub")
             .orgTranslationShort("CSC")
             .orgTranslation("Computer Science Club")
-            .inactive(false)
+            .inactive(true)
             .build();
+
     when(ucsbOrganizationRepository.save(eq(cs))).thenReturn(cs);
 
-    // act
     MvcResult response =
         mockMvc
             .perform(
@@ -125,13 +122,13 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
                     .param("orgCode", "CSClub")
                     .param("orgTranslationShort", "CSC")
                     .param("orgTranslation", "Computer Science Club")
-                    .param("inactive", "false")
+                    .param("inactive", "true")
                     .with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
-    // assert
-    verify(ucsbOrganizationRepository, times(1)).save(eq(cs));
+    verify(ucsbOrganizationRepository, times(1)).save(cs);
+
     String expectedJson = mapper.writeValueAsString(cs);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);

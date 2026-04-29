@@ -34,7 +34,9 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
 
   @Test
   public void logged_out_users_cannot_get_all() throws Exception {
-    mockMvc.perform(get("/api/UCSBOrganization/all")).andExpect(status().is(403));
+    mockMvc
+        .perform(get("/api/UCSBOrganization/all"))
+        .andExpect(status().is(403)); // logged out users can't get all
   }
 
   // Authorization tests for /api/ucsborganizationpost
@@ -63,7 +65,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
                 .param("orgTranslation", "Computer Science Club")
                 .param("inactive", "false")
                 .with(csrf()))
-        .andExpect(status().is(403));
+        .andExpect(status().is(403)); // only admins can post
   }
 
   @WithMockUser(roles = {"ADMIN", "USER"})
@@ -114,7 +116,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
             .orgCode("CSClub")
             .orgTranslationShort("CSC")
             .orgTranslation("Computer Science Club")
-            .inactive(true)
+            .inactive(false)
             .build();
 
     ArrayList<UCSBOrganization> expectedOrganizations = new ArrayList<>();

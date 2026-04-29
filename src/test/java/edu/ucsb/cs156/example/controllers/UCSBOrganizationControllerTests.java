@@ -37,6 +37,8 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
     mockMvc.perform(get("/api/UCSBOrganization/all")).andExpect(status().is(403));
   }
 
+  // Authorization tests for /api/ucsborganizationpost
+  // (Perhaps should also have these for put and delete)
   @Test
   public void logged_out_users_cannot_post() throws Exception {
     mockMvc
@@ -112,7 +114,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
             .orgCode("CSClub")
             .orgTranslationShort("CSC")
             .orgTranslation("Computer Science Club")
-            .inactive(false)
+            .inactive(true)
             .build();
 
     ArrayList<UCSBOrganization> expectedOrganizations = new ArrayList<>();

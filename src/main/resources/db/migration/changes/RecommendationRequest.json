@@ -2,7 +2,7 @@
     "databaseChangeLog": [
       {
         "changeSet": {
-          "id": "RecommendationRequests-1",
+          "id": "RecommendationRequest-1",
           "author": "Yinwu-Jinliu",
           "preConditions": [
             {
@@ -12,7 +12,7 @@
               "not": [
                 {
                   "tableExists": {
-                    "tableName": "RECOMMENDATIONREQUESTS"
+                    "tableName": "RECOMMENDATIONREQUEST"
                   }
                 }
               ]
@@ -27,7 +27,7 @@
                       "autoIncrement": true,
                       "constraints": {
                         "primaryKey": true,
-                        "primaryKeyName": "RECOMMENDATIONREQUESTS_PK"
+                        "primaryKeyName": "RECOMMENDATIONREQUEST_PK"
                       },
                       "name": "ID",
                       "type": "BIGINT"
@@ -70,7 +70,7 @@
                     }
                   }
                 ],
-                "tableName": "RECOMMENDATIONREQUESTS"
+                "tableName": "RECOMMENDATIONREQUEST"
               }
             }
           ]

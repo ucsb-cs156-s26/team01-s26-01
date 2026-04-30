@@ -6,11 +6,15 @@ import edu.ucsb.cs156.example.repositories.UCSBOrganizationRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -83,5 +87,39 @@ public class UCSBOrganizationController extends ApiController {
             .orElseThrow(() -> new EntityNotFoundException(UCSBOrganization.class, code));
 
     return commons;
+  }
+
+  @Operation(summary = "Update a single organization")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("")
+  public UCSBOrganization updateOrganization(
+      @Parameter(name = "code") @RequestParam String code,
+      @RequestBody @Valid UCSBOrganization incoming) {
+
+    UCSBOrganization organization =
+        ucsbOrganizationRepository
+            .findById(code)
+            .orElseThrow(() -> new EntityNotFoundException(UCSBOrganization.class, code));
+
+    organization.setOrgTranslationShort(incoming.getOrgTranslationShort());
+    organization.setOrgTranslation(incoming.getOrgTranslation());
+    organization.setInactive(incoming.getInactive());
+
+    ucsbOrganizationRepository.save(organization);
+    return organization;
+  }
+
+  @Operation(summary = "Delete a single organization")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @DeleteMapping("")
+  public Object deleteOrganization(@Parameter(name = "code") @RequestParam String code) {
+
+    UCSBOrganization organization =
+        ucsbOrganizationRepository
+            .findById(code)
+            .orElseThrow(() -> new EntityNotFoundException(UCSBOrganization.class, code));
+
+    ucsbOrganizationRepository.delete(organization);
+    return genericMessage("UCSBOrganization with id %s deleted".formatted(code));
   }
 }

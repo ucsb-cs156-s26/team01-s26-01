@@ -182,4 +182,124 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);
   }
+
+  // PUT
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_can_edit_an_existing_organization() throws Exception {
+
+    UCSBOrganization original =
+        UCSBOrganization.builder()
+            .orgCode("CSClub")
+            .orgTranslationShort("CSC")
+            .orgTranslation("Computer Science Club")
+            .inactive(false)
+            .build();
+
+    UCSBOrganization updated =
+        UCSBOrganization.builder()
+            .orgCode("CSClub")
+            .orgTranslationShort("CS Updated")
+            .orgTranslation("Computer Science Club Updated")
+            .inactive(true)
+            .build();
+
+    String requestBody = mapper.writeValueAsString(updated);
+
+    when(ucsbOrganizationRepository.findById(eq("CSClub"))).thenReturn(Optional.of(original));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/UCSBOrganization?code=CSClub")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    verify(ucsbOrganizationRepository, times(1)).findById(eq("CSClub"));
+    verify(ucsbOrganizationRepository, times(1)).save(original);
+    String responseString = response.getResponse().getContentAsString();
+    assertEquals(requestBody, responseString);
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_cannot_edit_organization_that_does_not_exist() throws Exception {
+
+    UCSBOrganization updated =
+        UCSBOrganization.builder()
+            .orgCode("CSClub")
+            .orgTranslationShort("CS Updated")
+            .orgTranslation("Computer Science Club Updated")
+            .inactive(true)
+            .build();
+
+    String requestBody = mapper.writeValueAsString(updated);
+
+    when(ucsbOrganizationRepository.findById(eq("CSClub"))).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/UCSBOrganization?code=CSClub")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+                    .with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    verify(ucsbOrganizationRepository, times(1)).findById(eq("CSClub"));
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("EntityNotFoundException", json.get("type"));
+    assertEquals("UCSBOrganization with id CSClub not found", json.get("message"));
+  }
+
+  // DELETE
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_can_delete_an_organization() throws Exception {
+
+    UCSBOrganization org =
+        UCSBOrganization.builder()
+            .orgCode("CSClub")
+            .orgTranslationShort("CSC")
+            .orgTranslation("Computer Science Club")
+            .inactive(false)
+            .build();
+
+    when(ucsbOrganizationRepository.findById(eq("CSClub"))).thenReturn(Optional.of(org));
+
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/UCSBOrganization?code=CSClub").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    verify(ucsbOrganizationRepository, times(1)).findById(eq("CSClub"));
+    verify(ucsbOrganizationRepository, times(1)).delete(org);
+    String responseString = response.getResponse().getContentAsString();
+    assertEquals("{\"message\":\"UCSBOrganization with id CSClub deleted\"}", responseString);
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_cannot_delete_organization_that_does_not_exist() throws Exception {
+
+    when(ucsbOrganizationRepository.findById(eq("CSClub"))).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/UCSBOrganization?code=CSClub").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    verify(ucsbOrganizationRepository, times(1)).findById(eq("CSClub"));
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("EntityNotFoundException", json.get("type"));
+    assertEquals("UCSBOrganization with id CSClub not found", json.get("message"));
+  }
 }

@@ -1,6 +1,7 @@
 package edu.ucsb.cs156.example.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -152,7 +153,7 @@ public class HelpRequestControllerTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"USER"})
   @Test
-  public void logged_in_user_can_get_all_helprequests() throws Exception {
+  public void logged_in_user_can_get_all_help_requests() throws Exception {
 
     // arrange
     LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
@@ -198,7 +199,7 @@ public class HelpRequestControllerTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"ADMIN", "USER"})
   @Test
-  public void an_admin_user_can_post_a_new_helprequest() throws Exception {
+  public void an_admin_user_can_post_a_new_help_request() throws Exception {
     // arrange
 
     LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
@@ -239,7 +240,7 @@ public class HelpRequestControllerTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"ADMIN", "USER"})
   @Test
-  public void admin_can_edit_an_existing_helprequest() throws Exception {
+  public void admin_can_edit_an_existing_help_request() throws Exception {
     // arrange
 
     LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
@@ -292,7 +293,7 @@ public class HelpRequestControllerTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"ADMIN", "USER"})
   @Test
-  public void admin_cannot_edit_helprequest_that_does_not_exist() throws Exception {
+  public void admin_cannot_edit_help_request_that_does_not_exist() throws Exception {
     // arrange
 
     LocalDateTime ldt = LocalDateTime.parse("2022-01-03T00:00:00");
@@ -328,5 +329,60 @@ public class HelpRequestControllerTests extends ControllerTestCase {
     verify(helpRequestRepository, times(1)).findById(67L);
     Map<String, Object> json = responseToJson(response);
     assertEquals("HelpRequest with id 67 not found", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_can_delete_a_help_request() throws Exception {
+    // arrange
+
+    LocalDateTime ldt = LocalDateTime.parse("2022-01-03T00:00:00");
+
+    HelpRequest helpRequest =
+        HelpRequest.builder()
+            .requesterEmail("testRequesterEmail")
+            .teamId("testTeamId")
+            .tableOrBreakoutRoom("testTable")
+            .requestTime(ldt)
+            .explanation("testExplanation")
+            .solved(true)
+            .build();
+
+    when(helpRequestRepository.findById(eq(15L))).thenReturn(Optional.of(helpRequest));
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/helprequests").param("id", "15").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    // assert
+    verify(helpRequestRepository, times(1)).findById(15L);
+    verify(helpRequestRepository, times(1)).delete(any());
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("HelpRequest with id 15 deleted", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_tries_to_delete_non_existant_help_request_and_gets_right_error_message()
+      throws Exception {
+    // arrange
+
+    when(helpRequestRepository.findById(eq(15L))).thenReturn(Optional.empty());
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/helprequests").param("id", "15").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    // assert
+    verify(helpRequestRepository, times(1)).findById(15L);
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("HelpRequest with id 15 not found", json.get("message"));
   }
 }

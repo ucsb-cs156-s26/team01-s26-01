@@ -1,6 +1,6 @@
 # team01-s26-01
 
-Deployments: <https://team01.dokku-01.cs.ucsb.edu>
+Deployments: <https://team01-qa.dokku-01.cs.ucsb.edu>
 
 
 | Table                     | Name       | Github Id  |

@@ -1,6 +1,7 @@
 package edu.ucsb.cs156.example.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -263,5 +264,56 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
     verify(ucsbOrganizationRepository, times(1)).findById("CSClub");
     Map<String, Object> json = responseToJson(response);
     assertEquals("UCSBOrganization with id CSClub not found", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_can_delete_a_organization() throws Exception {
+    // arrange
+
+    UCSBOrganization DSClub =
+        UCSBOrganization.builder()
+            .orgCode("DSClub")
+            .orgTranslationShort("DSC")
+            .orgTranslation("Data Science Club")
+            .inactive(true)
+            .build();
+
+    when(ucsbOrganizationRepository.findById(eq("DSClub"))).thenReturn(Optional.of(DSClub));
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/UCSBOrganization").param("code", "DSClub").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    // assert
+    verify(ucsbOrganizationRepository, times(1)).findById("DSClub");
+    verify(ucsbOrganizationRepository, times(1)).delete(any());
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("UCSBOrganization with id DSClub deleted", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_tries_to_delete_non_existant_organization_and_gets_right_error_message()
+      throws Exception {
+    // arrange
+
+    when(ucsbOrganizationRepository.findById(eq("cs-club"))).thenReturn(Optional.empty());
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/UCSBOrganization").param("code", "cs-club").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    // assert
+    verify(ucsbOrganizationRepository, times(1)).findById("cs-club");
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("UCSBOrganization with id cs-club not found", json.get("message"));
   }
 }

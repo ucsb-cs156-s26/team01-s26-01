@@ -138,7 +138,9 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
 
   @Test
   public void logged_out_users_cannot_get_by_id() throws Exception {
-    mockMvc.perform(get("/api/UCSBOrganization").param("code", "cs")).andExpect(status().is(403));
+    mockMvc
+        .perform(get("/api/UCSBOrganization").param("orgCode", "cs"))
+        .andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"USER"})
@@ -148,7 +150,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
 
     MvcResult response =
         mockMvc
-            .perform(get("/api/UCSBOrganization").param("code", "cs"))
+            .perform(get("/api/UCSBOrganization").param("orgCode", "cs"))
             .andExpect(status().isNotFound())
             .andReturn();
 
@@ -174,7 +176,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
 
     MvcResult response =
         mockMvc
-            .perform(get("/api/UCSBOrganization").param("code", "CSClub"))
+            .perform(get("/api/UCSBOrganization").param("orgCode", "CSClub"))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -215,7 +217,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
         mockMvc
             .perform(
                 put("/api/UCSBOrganization")
-                    .param("code", "CSClub")
+                    .param("orgCode", "CSClub")
                     .contentType(MediaType.APPLICATION_JSON)
                     .characterEncoding("utf-8")
                     .content(requestBody)
@@ -252,7 +254,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
         mockMvc
             .perform(
                 put("/api/UCSBOrganization")
-                    .param("code", "CSClub")
+                    .param("orgCode", "CSClub")
                     .contentType(MediaType.APPLICATION_JSON)
                     .characterEncoding("utf-8")
                     .content(requestBody)
@@ -284,7 +286,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
     // act
     MvcResult response =
         mockMvc
-            .perform(delete("/api/UCSBOrganization").param("code", "DSClub").with(csrf()))
+            .perform(delete("/api/UCSBOrganization").param("orgCode", "DSClub").with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -307,7 +309,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
     // act
     MvcResult response =
         mockMvc
-            .perform(delete("/api/UCSBOrganization").param("code", "cs-club").with(csrf()))
+            .perform(delete("/api/UCSBOrganization").param("orgCode", "cs-club").with(csrf()))
             .andExpect(status().isNotFound())
             .andReturn();
 

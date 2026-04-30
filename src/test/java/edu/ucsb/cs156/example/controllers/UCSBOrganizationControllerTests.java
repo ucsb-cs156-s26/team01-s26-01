@@ -202,7 +202,7 @@ public class UCSBOrganizationControllerTests extends ControllerTestCase {
             .orgCode("DSClub")
             .orgTranslationShort("DSC")
             .orgTranslation("Data Science Club")
-            .inactive(true)
+            .inactive(false)
             .build();
 
     String requestBody = mapper.writeValueAsString(orgEdited);

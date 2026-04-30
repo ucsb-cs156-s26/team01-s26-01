@@ -23,4 +23,4 @@ repo_name: "TBD"
 repo: ucsb-cs156-s26/team01-s26-01
 owner: ucsb-cs156-s26
 repo_name: team01-s26-01
-pull_requests: [{"author":{"id":"U_kgDOCv5aZg","is_bot":false,"login":"oscarv06-cs","name":""},"headRefName":"Oscar-MenuItemReview","number":55,"title":"pc - create database table for MenuItemReview","url":"https://github.com/ucsb-cs156-s26/team01-s26-01/pull/55"}]
+pull_requests: []

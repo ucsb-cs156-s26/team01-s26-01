@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MenuItemReviewController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team01</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs156.example.controllers</a> &gt; <span class="el_source">MenuItemReviewController.java</span></div><h1>MenuItemReviewController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs156.example.controllers;
+
+import edu.ucsb.cs156.example.entities.MenuItemReview;
+import edu.ucsb.cs156.example.errors.EntityNotFoundException;
+import edu.ucsb.cs156.example.repositories.MenuItemReviewRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.time.LocalDateTime;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@Tag(name = &quot;MenuItemReview&quot;)
+@RequestMapping(&quot;/api/menuitemreview&quot;)
+@RestController
+<span class="fc" id="L27">@Slf4j</span>
+<span class="fc" id="L28">public class MenuItemReviewController extends ApiController {</span>
+
+  @Autowired MenuItemReviewRepository menuItemReviewRepository;
+
+  @Operation(summary = &quot;List all menu item reviews&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/all&quot;)
+  public Iterable&lt;MenuItemReview&gt; allMenuItemReviews() {
+<span class="fc" id="L36">    Iterable&lt;MenuItemReview&gt; reviews = menuItemReviewRepository.findAll();</span>
+<span class="fc" id="L37">    return reviews;</span>
+  }
+
+  @Operation(summary = &quot;Create a new review&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/post&quot;)
+  public MenuItemReview postMenuItemReview(
+      @Parameter(name = &quot;itemId&quot;) @RequestParam Long itemId,
+      @Parameter(name = &quot;reviewerEmail&quot;) @RequestParam String reviewerEmail,
+      @Parameter(name = &quot;stars&quot;) @RequestParam int stars,
+      @Parameter(
+              name = &quot;dateReviewed&quot;,
+              description = &quot;date (in iso format, e.g. YYYY-mm-ddTHH:MM:SS)&quot;)
+          @RequestParam(&quot;dateReviewed&quot;)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+          LocalDateTime dateReviewed,
+      @Parameter(name = &quot;comments&quot;) @RequestParam String comments) {
+
+<span class="fc" id="L55">    log.info(</span>
+        &quot;postMenuItemReview: itemId={}, reviewerEmail={}, stars={}, dateReviewed={}, comments={}&quot;,
+        itemId,
+        reviewerEmail,
+<span class="fc" id="L59">        stars,</span>
+        dateReviewed,
+        comments);
+
+<span class="fc" id="L63">    MenuItemReview review = new MenuItemReview();</span>
+<span class="fc" id="L64">    review.setItemId(itemId);</span>
+<span class="fc" id="L65">    review.setReviewerEmail(reviewerEmail);</span>
+<span class="fc" id="L66">    review.setStars(stars);</span>
+<span class="fc" id="L67">    review.setDateReviewed(dateReviewed);</span>
+<span class="fc" id="L68">    review.setComments(comments);</span>
+
+<span class="fc" id="L70">    MenuItemReview savedReview = menuItemReviewRepository.save(review);</span>
+
+<span class="fc" id="L72">    return savedReview;</span>
+  }
+
+  /**
+   * Get a single record from the table; use the value passed in as a @RequestParam to do a lookup
+   * by id. If a matching row is found, return the row as a JSON object, otherwise throw an
+   * EntityNotFoundException.
+   *
+   * @param id the id of the review
+   * @return a MenuItemReview
+   */
+  @Operation(summary = &quot;Get a single review&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;&quot;)
+  public MenuItemReview getById(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
+<span class="fc" id="L87">    MenuItemReview menuItemReview =</span>
+        menuItemReviewRepository
+<span class="fc" id="L89">            .findById(id)</span>
+<span class="fc" id="L90">            .orElseThrow(() -&gt; new EntityNotFoundException(MenuItemReview.class, id));</span>
+
+<span class="fc" id="L92">    return menuItemReview;</span>
+  }
+
+  /**
+   * Get a single record from the table; use the value passed in as a @RequestParam to do a lookup
+   * by id. If a matching row is found, update that row with the values passed in as a JSON object.
+   * If a matching row is not found, throw an EntityNotFoundException.
+   *
+   * @param id id of the review to update
+   * @param incoming the new review
+   * @return the updated review object
+   */
+  @Operation(summary = &quot;Update a single review&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;&quot;)
+  public MenuItemReview updateMenuItemReview(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id, @RequestBody @Valid MenuItemReview incoming) {
+
+<span class="fc" id="L110">    MenuItemReview menuItemReview =</span>
+        menuItemReviewRepository
+<span class="fc" id="L112">            .findById(id)</span>
+<span class="fc" id="L113">            .orElseThrow(() -&gt; new EntityNotFoundException(MenuItemReview.class, id));</span>
+
+<span class="fc" id="L115">    menuItemReview.setItemId(incoming.getItemId());</span>
+<span class="fc" id="L116">    menuItemReview.setReviewerEmail(incoming.getReviewerEmail());</span>
+<span class="fc" id="L117">    menuItemReview.setStars(incoming.getStars());</span>
+<span class="fc" id="L118">    menuItemReview.setDateReviewed(incoming.getDateReviewed());</span>
+<span class="fc" id="L119">    menuItemReview.setComments(incoming.getComments());</span>
+
+<span class="fc" id="L121">    menuItemReviewRepository.save(menuItemReview);</span>
+
+<span class="fc" id="L123">    return menuItemReview;</span>
+  }
+
+  /**
+   * Delete a review * @param id the id of the review to delete
+   *
+   * @return a message indicating the review was deleted
+   */
+  @Operation(summary = &quot;Delete a review&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @DeleteMapping(&quot;&quot;)
+  public Object deleteMenuItemReview(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
+
+<span class="fc" id="L136">    MenuItemReview menuItemReview =</span>
+        menuItemReviewRepository
+<span class="fc" id="L138">            .findById(id)</span>
+<span class="fc" id="L139">            .orElseThrow(() -&gt; new EntityNotFoundException(MenuItemReview.class, id));</span>
+
+<span class="fc" id="L141">    menuItemReviewRepository.delete(menuItemReview);</span>
+<span class="fc" id="L142">    return genericMessage(&quot;MenuItemReview with id %s deleted&quot;.formatted(id));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

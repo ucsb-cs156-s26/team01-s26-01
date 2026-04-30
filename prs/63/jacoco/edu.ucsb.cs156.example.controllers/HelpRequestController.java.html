@@ -112,7 +112,7 @@ import org.springframework.web.bind.annotation.RestController;
    * @param incoming the new help request
    * @return the updated HelpRequest object
    */
-  @Operation(summary = &quot;Update a single date&quot;)
+  @Operation(summary = &quot;Update a single help request&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @PutMapping(&quot;&quot;)
   public HelpRequest updateHelpRequest(

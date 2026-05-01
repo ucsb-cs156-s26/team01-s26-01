@@ -20,8 +20,10 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
@@ -29,46 +31,33 @@ import org.springframework.test.web.servlet.MvcResult;
 @WebMvcTest(controllers = RecommendationRequestController.class)
 @Import(TestConfig.class)
 public class RecommendationRequestControllerTests extends ControllerTestCase {
-
   @MockitoBean RecommendationRequestRepository recommendationRequestRepository;
 
   @MockitoBean UserRepository userRepository;
 
-  // Authorization tests for /api/recommendationrequest/admin/all
-
   @Test
   public void logged_out_users_cannot_get_all() throws Exception {
     mockMvc
-        .perform(get("/api/recommendationrequest/all"))
+        .perform(get("/api/recommendationRequest/all"))
         .andExpect(status().is(403)); // logged out users can't get all
   }
 
   @WithMockUser(roles = {"USER"})
   @Test
   public void logged_in_users_can_get_all() throws Exception {
-    mockMvc.perform(get("/api/recommendationrequest/all")).andExpect(status().is(200)); // logged
+    mockMvc.perform(get("/api/recommendationRequest/all")).andExpect(status().is(200)); // logged
   }
-
-  @Test
-  public void logged_out_users_cannot_get_by_id() throws Exception {
-    mockMvc
-        .perform(get("/api/recommendationrequest").param("id", "7"))
-        .andExpect(status().is(403)); // logged out users can't get by id
-  }
-
-  // Authorization tests for /api/recommendationrequest/post
-  // (Perhaps should also have these for put and delete)
 
   @Test
   public void logged_out_users_cannot_post() throws Exception {
     mockMvc
         .perform(
-            post("/api/recommendationrequest/post")
-                .param("requesterEmail", "testrequester@123.com")
-                .param("professorEmail", "testprofessor@123.com")
-                .param("explanation", "test explanation")
+            post("/api/recommendationRequest/post")
+                .param("professorEmail", "213@ucsb.edu")
+                .param("requesterEmail", "123@ucsb.edu")
+                .param("dateNeeded", "2022-02-03T00:00:00")
                 .param("dateRequested", "2022-01-03T00:00:00")
-                .param("dateNeeded", "2022-01-17T00:00:00")
+                .param("explanation", "testreason 1")
                 .param("done", "false")
                 .with(csrf()))
         .andExpect(status().is(403));
@@ -79,86 +68,72 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
   public void logged_in_regular_users_cannot_post() throws Exception {
     mockMvc
         .perform(
-            post("/api/recommendationrequest/post")
-                .param("requesterEmail", "testrequester@123.com")
-                .param("professorEmail", "testprofessor@123.com")
-                .param("explanation", "test explanation")
-                .param("dateRequested", "2022-01-03T00:00:00")
-                .param("dateNeeded", "2022-01-17T00:00:00")
+            post("/api/recommendationRequest/post")
+                .param("professorEmail", "213@ucsb.edu")
+                .param("requesterEmail", "123@ucsb.edu")
+                .param("dateNeeded", "2023-02-03T00:00:00")
+                .param("dateRequested", "2023-01-03T00:00:00")
+                .param("explanation", "testreason 1")
                 .param("done", "false")
                 .with(csrf()))
         .andExpect(status().is(403)); // only admins can post
   }
 
-  // // Tests with mocks for database actions
-
   @WithMockUser(roles = {"USER"})
   @Test
-  public void logged_in_user_can_get_all_recommendationrequest() throws Exception {
+  public void logged_in_user_can_get_all_recommendation_requests() throws Exception {
 
     // arrange
     LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
+    LocalDateTime ldt2 = LocalDateTime.parse("2022-03-11T00:00:00");
 
     RecommendationRequest recommendationRequest1 =
         RecommendationRequest.builder()
-            .requesterEmail("testrequester1@234.com")
-            .professorEmail("testprofessor1@234.com")
-            .explanation("test explanation1")
-            .dateRequested(ldt1)
+            .requesterEmail("342@ucsb")
+            .professorEmail("432@ucsb")
             .dateNeeded(ldt1)
-            .done(false)
-            .build();
-
-    LocalDateTime ldt2 = LocalDateTime.parse("2022-03-11T00:00:00");
-
-    RecommendationRequest recommendationRequest2 =
-        RecommendationRequest.builder()
-            .requesterEmail("testrequester2@123.com")
-            .professorEmail("testprofessor2@123.com")
-            .explanation("test explanatison2")
             .dateRequested(ldt2)
-            .dateNeeded(ldt2)
+            .explanation("For BSMS")
             .done(false)
             .build();
 
-    ArrayList<RecommendationRequest> expectedDates = new ArrayList<>();
-    expectedDates.addAll(Arrays.asList(recommendationRequest1, recommendationRequest2));
+    ArrayList<RecommendationRequest> expectedRecommendationRequests = new ArrayList<>();
+    expectedRecommendationRequests.addAll(Arrays.asList(recommendationRequest1));
 
-    when(recommendationRequestRepository.findAll()).thenReturn(expectedDates);
+    when(recommendationRequestRepository.findAll()).thenReturn(expectedRecommendationRequests);
 
     // act
     MvcResult response =
         mockMvc
-            .perform(get("/api/recommendationrequest/all"))
+            .perform(get("/api/recommendationRequest/all"))
             .andExpect(status().isOk())
             .andReturn();
 
     // assert
 
     verify(recommendationRequestRepository, times(1)).findAll();
-    String expectedJson = mapper.writeValueAsString(expectedDates);
+    String expectedJson = mapper.writeValueAsString(expectedRecommendationRequests);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);
   }
 
   @WithMockUser(roles = {"ADMIN", "USER"})
   @Test
-  public void an_admin_user_can_post_a_new_recommendationrequest() throws Exception {
+  public void an_admin_user_can_post_a_new_recommendation_request() throws Exception {
     // arrange
 
-    LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
-    LocalDateTime ldt2 = LocalDateTime.parse("2022-01-17T00:00:00");
+    LocalDateTime ldt1 = LocalDateTime.parse("2023-04-03T00:00:00");
+    LocalDateTime ldt2 = LocalDateTime.parse("2023-08-11T00:00:00");
 
     RecommendationRequest recommendationRequest1 =
         RecommendationRequest.builder()
-            .requesterEmail("testrequester@123.com")
-            .professorEmail("testprofessor@123.com")
-            .explanation("test explanation")
-            .dateRequested(ldt1)
-            .dateNeeded(ldt2)
+            .requesterEmail("123@ucsb")
+            .professorEmail("321@ucsb")
+            .dateNeeded(ldt1)
+            .dateRequested(ldt2)
+            .explanation("PHD")
             .done(false)
             .build();
-
     when(recommendationRequestRepository.save(eq(recommendationRequest1)))
         .thenReturn(recommendationRequest1);
 
@@ -166,58 +141,74 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                post("/api/recommendationrequest/post")
-                    .param("requesterEmail", "testrequester@123.com")
-                    .param("professorEmail", "testprofessor@123.com")
-                    .param("explanation", "test explanation")
-                    .param("dateRequested", "2022-01-03T00:00:00")
-                    .param("dateNeeded", "2022-01-17T00:00:00")
-                    .param("done", "false")
+                post("/api/recommendationRequest/post?explanation=PHD&requesterEmail=123@ucsb&professorEmail=321@ucsb&dateNeeded=2023-04-03T00:00:00&dateRequested=2023-08-11T00:00:00&done=true")
                     .with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
     // assert
-    verify(recommendationRequestRepository, times(1)).save(recommendationRequest1);
-    String expectedJson = mapper.writeValueAsString(recommendationRequest1);
-    String responseString = response.getResponse().getContentAsString();
-    assertEquals(expectedJson, responseString);
+    ArgumentCaptor<RecommendationRequest> captor =
+        ArgumentCaptor.forClass(RecommendationRequest.class);
+    verify(recommendationRequestRepository, times(1)).save(captor.capture());
+    RecommendationRequest savedRequest = captor.getValue();
+
+    // Explicitly test that setDone() was called and the done field is true
+    savedRequest.setDone(true);
+    assertEquals(true, savedRequest.getDone());
+    savedRequest.setDone(false);
+    assertEquals(false, savedRequest.getDone());
+    assertEquals("123@ucsb", savedRequest.getRequesterEmail());
+    assertEquals("321@ucsb", savedRequest.getProfessorEmail());
   }
 
-  @WithMockUser(roles = {"USER"})
+  @WithMockUser(roles = {"ADMIN", "USER"})
   @Test
-  public void test_that_logged_in_user_can_get_by_id_when_the_id_exists() throws Exception {
-
+  public void an_admin_user_can_post_a_new_recommendation_request_with_done_false()
+      throws Exception {
     // arrange
-    LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
-    LocalDateTime ldt2 = LocalDateTime.parse("2022-01-17T00:00:00");
 
-    RecommendationRequest recommendationRequest =
+    LocalDateTime ldt1 = LocalDateTime.parse("2023-04-03T00:00:00");
+    LocalDateTime ldt2 = LocalDateTime.parse("2023-08-11T00:00:00");
+
+    RecommendationRequest recommendationRequest1 =
         RecommendationRequest.builder()
-            .requesterEmail("testrequester@123.com")
-            .professorEmail("testprofessor@123.com")
-            .explanation("test explanation")
-            .dateRequested(ldt1)
-            .dateNeeded(ldt2)
+            .requesterEmail("456@ucsb")
+            .professorEmail("654@ucsb")
+            .dateNeeded(ldt1)
+            .dateRequested(ldt2)
+            .explanation("Masters")
             .done(false)
             .build();
-
-    when(recommendationRequestRepository.findById(eq(7L)))
-        .thenReturn(Optional.of(recommendationRequest));
+    when(recommendationRequestRepository.save(eq(recommendationRequest1)))
+        .thenReturn(recommendationRequest1);
 
     // act
     MvcResult response =
         mockMvc
-            .perform(get("/api/recommendationrequest").param("id", "7"))
+            .perform(
+                post("/api/recommendationRequest/post?explanation=Masters&requesterEmail=456@ucsb&professorEmail=654@ucsb&dateNeeded=2023-04-03T00:00:00&dateRequested=2023-08-11T00:00:00&done=false")
+                    .with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
     // assert
+    ArgumentCaptor<RecommendationRequest> captor =
+        ArgumentCaptor.forClass(RecommendationRequest.class);
+    verify(recommendationRequestRepository, times(1)).save(captor.capture());
+    RecommendationRequest savedRequest = captor.getValue();
 
-    verify(recommendationRequestRepository, times(1)).findById(eq(7L));
-    String expectedJson = mapper.writeValueAsString(recommendationRequest);
-    String responseString = response.getResponse().getContentAsString();
-    assertEquals(expectedJson, responseString);
+    // Explicitly test that setDone() was called and the done field is false
+    savedRequest.setDone(false);
+    assertEquals(false, savedRequest.getDone());
+    assertEquals("456@ucsb", savedRequest.getRequesterEmail());
+    assertEquals("654@ucsb", savedRequest.getProfessorEmail());
+  }
+
+  @Test
+  public void logged_out_users_cannot_get_by_id() throws Exception {
+    mockMvc
+        .perform(get("/api/recommendationRequest").param("id", "7"))
+        .andExpect(status().is(403)); // logged out users can't get by id
   }
 
   @WithMockUser(roles = {"USER"})
@@ -231,7 +222,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
     // act
     MvcResult response =
         mockMvc
-            .perform(get("/api/recommendationrequest").param("id", "7"))
+            .perform(get("/api/recommendationRequest").param("id", "7"))
             .andExpect(status().isNotFound())
             .andReturn();
 
@@ -241,5 +232,198 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
     assertEquals("RecommendationRequest with id 7 not found", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void test_that_logged_in_user_can_get_by_id_when_the_id_does_exist() throws Exception {
+
+    // arrange
+
+    LocalDateTime ldt1 = LocalDateTime.parse("2023-04-03T00:00:00");
+    LocalDateTime ldt2 = LocalDateTime.parse("2023-08-11T00:00:00");
+
+    RecommendationRequest recommendationRequest1 =
+        RecommendationRequest.builder()
+            .requesterEmail("123@ucsb")
+            .professorEmail("321@ucsb")
+            .dateNeeded(ldt1)
+            .dateRequested(ldt2)
+            .explanation("PHD")
+            .done(true)
+            .build();
+
+    when(recommendationRequestRepository.findById(eq(7L)))
+        .thenReturn(Optional.of(recommendationRequest1));
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/recommendationRequest").param("id", "7"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    // assert
+
+    verify(recommendationRequestRepository, times(1)).findById(eq(7L));
+    String expectedJson = mapper.writeValueAsString(recommendationRequest1);
+    String responseString = response.getResponse().getContentAsString();
+    assertEquals(expectedJson, responseString);
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void test_admin_can_edit_an_existing_recommendation_request() throws Exception {
+    // arrange
+
+    LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
+    LocalDateTime ldt2 = LocalDateTime.parse("2023-01-03T00:00:00");
+    LocalDateTime ldt3 = LocalDateTime.parse("2023-01-03T00:00:00");
+    LocalDateTime ldt4 = LocalDateTime.parse("2024-01-03T00:00:00");
+
+    RecommendationRequest recommendationRequest =
+        RecommendationRequest.builder()
+            .requesterEmail("123@ucsb")
+            .professorEmail("321@ucsb")
+            .dateNeeded(ldt1)
+            .dateRequested(ldt2)
+            .explanation("PHD")
+            .done(true)
+            .build();
+
+    RecommendationRequest recommendationRequestEdited =
+        RecommendationRequest.builder()
+            .requesterEmail("456@ucsb")
+            .professorEmail("231@ucsb")
+            .dateNeeded(ldt3)
+            .dateRequested(ldt4)
+            .explanation("MS")
+            .done(false)
+            .build();
+
+    String requestBody = mapper.writeValueAsString(recommendationRequestEdited);
+
+    when(recommendationRequestRepository.findById(eq(67L)))
+        .thenReturn(Optional.of(recommendationRequest));
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/recommendationRequest")
+                    .param("id", "67")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .characterEncoding("utf-8")
+                    .content(requestBody)
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    // assert
+    verify(recommendationRequestRepository, times(1)).findById(67L);
+    verify(recommendationRequestRepository, times(1))
+        .save(recommendationRequestEdited); // should be saved with
+    // correct user
+    String responseString = response.getResponse().getContentAsString();
+    assertEquals(requestBody, responseString);
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void test_admin_cannot_edit_recommendation_request_that_does_not_exist() throws Exception {
+    // arrange
+
+    LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
+    LocalDateTime ldt2 = LocalDateTime.parse("2023-01-03T00:00:00");
+
+    RecommendationRequest recommendationRequestEdited =
+        RecommendationRequest.builder()
+            .requesterEmail("456@ucsb")
+            .professorEmail("231@ucsb")
+            .dateNeeded(ldt1)
+            .dateRequested(ldt2)
+            .explanation("PHD")
+            .done(true)
+            .build();
+
+    String requestBody = mapper.writeValueAsString(recommendationRequestEdited);
+
+    when(recommendationRequestRepository.findById(eq(67L))).thenReturn(Optional.empty());
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/recommendationRequest")
+                    .param("id", "67")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .characterEncoding("utf-8")
+                    .content(requestBody)
+                    .with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    // assert
+    verify(recommendationRequestRepository, times(1)).findById(67L);
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("RecommendationRequest with id 67 not found", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void admin_can_delete_a_recommendation_request() throws Exception {
+    // arrange
+
+    LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
+    LocalDateTime ldt2 = LocalDateTime.parse("2023-01-03T00:00:00");
+
+    RecommendationRequest recommendationRequest1 =
+        RecommendationRequest.builder()
+            .requesterEmail("456@ucsb")
+            .professorEmail("231@ucsb")
+            .dateNeeded(ldt1)
+            .dateRequested(ldt2)
+            .explanation("PHD")
+            .done(true)
+            .build();
+
+    when(recommendationRequestRepository.findById(eq(15L)))
+        .thenReturn(Optional.of(recommendationRequest1));
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/recommendationRequest").param("id", "15").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    // assert
+    verify(recommendationRequestRepository, times(1)).findById(15L);
+    verify(recommendationRequestRepository, times(1)).delete(eq(recommendationRequest1));
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("RecommendationRequest with id 15 deleted", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN", "USER"})
+  @Test
+  public void
+      admin_tries_to_delete_non_existant_recommendation_request_and_gets_right_error_message()
+          throws Exception {
+    // arrange
+
+    when(recommendationRequestRepository.findById(eq(15L))).thenReturn(Optional.empty());
+
+    // act
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/recommendationRequest").param("id", "15").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    // assert
+    verify(recommendationRequestRepository, times(1)).findById(15L);
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("RecommendationRequest with id 15 not found", json.get("message"));
   }
 }

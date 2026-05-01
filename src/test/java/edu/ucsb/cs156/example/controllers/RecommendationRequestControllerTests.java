@@ -259,7 +259,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
 
     String requestBody = mapper.writeValueAsString(recommendationRequestEdited);
 
-    when(recommendationRequestRepository.findById(eq(012L)))
+    when(recommendationRequestRepository.findById(eq(12L)))
         .thenReturn(Optional.of(recommendationRequest));
 
     // act
@@ -267,7 +267,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
         mockMvc
             .perform(
                 put("/api/recommendationRequest")
-                    .param("id", "012")
+                    .param("id", "12")
                     .contentType(MediaType.APPLICATION_JSON)
                     .characterEncoding("utf-8")
                     .content(requestBody)
@@ -276,7 +276,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
             .andReturn();
 
     // assert
-    verify(recommendationRequestRepository, times(1)).findById(012L);
+    verify(recommendationRequestRepository, times(1)).findById(12L);
     verify(recommendationRequestRepository, times(1))
         .save(recommendationRequestEdited); // should be saved with
     // correct user
@@ -304,14 +304,14 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
 
     String requestBody = mapper.writeValueAsString(recommendationRequestEdited);
 
-    when(recommendationRequestRepository.findById(eq(012L))).thenReturn(Optional.empty());
+    when(recommendationRequestRepository.findById(eq(12L))).thenReturn(Optional.empty());
 
     // act
     MvcResult response =
         mockMvc
             .perform(
                 put("/api/recommendationRequest")
-                    .param("id", "012")
+                    .param("id", "12")
                     .contentType(MediaType.APPLICATION_JSON)
                     .characterEncoding("utf-8")
                     .content(requestBody)
@@ -320,9 +320,9 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
             .andReturn();
 
     // assert
-    verify(recommendationRequestRepository, times(1)).findById(012L);
+    verify(recommendationRequestRepository, times(1)).findById(12L);
     Map<String, Object> json = responseToJson(response);
-    assertEquals("RecommendationRequest with id 012 not found", json.get("message"));
+    assertEquals("RecommendationRequest with id 12 not found", json.get("message"));
   }
 
   @WithMockUser(roles = {"ADMIN", "USER"})

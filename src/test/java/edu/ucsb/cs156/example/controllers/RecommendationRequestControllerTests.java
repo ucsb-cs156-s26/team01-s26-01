@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -53,11 +52,11 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
     mockMvc
         .perform(
             post("/api/recommendationRequest/post")
-                .param("professorEmail", "213@ucsb.edu")
-                .param("requesterEmail", "123@ucsb.edu")
+                .param("professorEmail", "abc@ucsb.edu")
+                .param("requesterEmail", "def@ucsb.edu")
                 .param("dateNeeded", "2022-02-03T00:00:00")
                 .param("dateRequested", "2022-01-03T00:00:00")
-                .param("explanation", "testreason 1")
+                .param("explanation", "wow such a good recommendation request")
                 .param("done", "false")
                 .with(csrf()))
         .andExpect(status().is(403));
@@ -69,11 +68,11 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
     mockMvc
         .perform(
             post("/api/recommendationRequest/post")
-                .param("professorEmail", "213@ucsb.edu")
-                .param("requesterEmail", "123@ucsb.edu")
+                .param("professorEmail", "777@ucsb.edu")
+                .param("requesterEmail", "888@ucsb.edu")
                 .param("dateNeeded", "2023-02-03T00:00:00")
                 .param("dateRequested", "2023-01-03T00:00:00")
-                .param("explanation", "testreason 1")
+                .param("explanation", "lol")
                 .param("done", "false")
                 .with(csrf()))
         .andExpect(status().is(403)); // only admins can post
@@ -89,8 +88,8 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
 
     RecommendationRequest recommendationRequest1 =
         RecommendationRequest.builder()
-            .requesterEmail("342@ucsb")
-            .professorEmail("432@ucsb")
+            .requesterEmail("123@ucsb")
+            .professorEmail("456@ucsb")
             .dateNeeded(ldt1)
             .dateRequested(ldt2)
             .explanation("For BSMS")
@@ -128,80 +127,37 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
     RecommendationRequest recommendationRequest1 =
         RecommendationRequest.builder()
             .requesterEmail("123@ucsb")
-            .professorEmail("321@ucsb")
+            .professorEmail("456@ucsb")
             .dateNeeded(ldt1)
             .dateRequested(ldt2)
             .explanation("PHD")
-            .done(false)
+            .done(true)
             .build();
     when(recommendationRequestRepository.save(eq(recommendationRequest1)))
         .thenReturn(recommendationRequest1);
 
+    /*
+     * param("requesterEmail", "123@ucsb.edu")
+     * .param("professorEmail", "456@ucsb.edu")
+     * .param("dateNeeded", "2023-04-03T00:00:00")
+     * .param("dateRequested", "2023-08-011T00:00:00")
+     * .param("explanation", "For PHD")
+     * .param("done", "true")
+     */
     // act
     MvcResult response =
         mockMvc
             .perform(
-                post("/api/recommendationRequest/post?explanation=PHD&requesterEmail=123@ucsb&professorEmail=321@ucsb&dateNeeded=2023-04-03T00:00:00&dateRequested=2023-08-11T00:00:00&done=true")
+                post("/api/recommendationRequest/post?explanation=PHD&requesterEmail=123@ucsb&professorEmail=456@ucsb&dateNeeded=2023-04-03T00:00:00&dateRequested=2023-08-11T00:00:00&done=true")
                     .with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
     // assert
-    ArgumentCaptor<RecommendationRequest> captor =
-        ArgumentCaptor.forClass(RecommendationRequest.class);
-    verify(recommendationRequestRepository, times(1)).save(captor.capture());
-    RecommendationRequest savedRequest = captor.getValue();
-
-    // Explicitly test that setDone() was called and the done field is true
-    savedRequest.setDone(true);
-    assertEquals(true, savedRequest.getDone());
-    savedRequest.setDone(false);
-    assertEquals(false, savedRequest.getDone());
-    assertEquals("123@ucsb", savedRequest.getRequesterEmail());
-    assertEquals("321@ucsb", savedRequest.getProfessorEmail());
-  }
-
-  @WithMockUser(roles = {"ADMIN", "USER"})
-  @Test
-  public void an_admin_user_can_post_a_new_recommendation_request_with_done_false()
-      throws Exception {
-    // arrange
-
-    LocalDateTime ldt1 = LocalDateTime.parse("2023-04-03T00:00:00");
-    LocalDateTime ldt2 = LocalDateTime.parse("2023-08-11T00:00:00");
-
-    RecommendationRequest recommendationRequest1 =
-        RecommendationRequest.builder()
-            .requesterEmail("456@ucsb")
-            .professorEmail("654@ucsb")
-            .dateNeeded(ldt1)
-            .dateRequested(ldt2)
-            .explanation("Masters")
-            .done(false)
-            .build();
-    when(recommendationRequestRepository.save(eq(recommendationRequest1)))
-        .thenReturn(recommendationRequest1);
-
-    // act
-    MvcResult response =
-        mockMvc
-            .perform(
-                post("/api/recommendationRequest/post?explanation=Masters&requesterEmail=456@ucsb&professorEmail=654@ucsb&dateNeeded=2023-04-03T00:00:00&dateRequested=2023-08-11T00:00:00&done=false")
-                    .with(csrf()))
-            .andExpect(status().isOk())
-            .andReturn();
-
-    // assert
-    ArgumentCaptor<RecommendationRequest> captor =
-        ArgumentCaptor.forClass(RecommendationRequest.class);
-    verify(recommendationRequestRepository, times(1)).save(captor.capture());
-    RecommendationRequest savedRequest = captor.getValue();
-
-    // Explicitly test that setDone() was called and the done field is false
-    savedRequest.setDone(false);
-    assertEquals(false, savedRequest.getDone());
-    assertEquals("456@ucsb", savedRequest.getRequesterEmail());
-    assertEquals("654@ucsb", savedRequest.getProfessorEmail());
+    verify(recommendationRequestRepository, times(1)).save(eq(recommendationRequest1));
+    String expectedJson = mapper.writeValueAsString(recommendationRequest1);
+    String responseString = response.getResponse().getContentAsString();
+    assertEquals(expectedJson, responseString);
   }
 
   @Test
@@ -246,7 +202,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
     RecommendationRequest recommendationRequest1 =
         RecommendationRequest.builder()
             .requesterEmail("123@ucsb")
-            .professorEmail("321@ucsb")
+            .professorEmail("456@ucsb")
             .dateNeeded(ldt1)
             .dateRequested(ldt2)
             .explanation("PHD")
@@ -284,7 +240,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
     RecommendationRequest recommendationRequest =
         RecommendationRequest.builder()
             .requesterEmail("123@ucsb")
-            .professorEmail("321@ucsb")
+            .professorEmail("456@ucsb")
             .dateNeeded(ldt1)
             .dateRequested(ldt2)
             .explanation("PHD")
@@ -293,8 +249,8 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
 
     RecommendationRequest recommendationRequestEdited =
         RecommendationRequest.builder()
-            .requesterEmail("456@ucsb")
-            .professorEmail("231@ucsb")
+            .requesterEmail("789@ucsb")
+            .professorEmail("000@ucsb")
             .dateNeeded(ldt3)
             .dateRequested(ldt4)
             .explanation("MS")
@@ -303,7 +259,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
 
     String requestBody = mapper.writeValueAsString(recommendationRequestEdited);
 
-    when(recommendationRequestRepository.findById(eq(67L)))
+    when(recommendationRequestRepository.findById(eq(012L)))
         .thenReturn(Optional.of(recommendationRequest));
 
     // act
@@ -311,7 +267,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
         mockMvc
             .perform(
                 put("/api/recommendationRequest")
-                    .param("id", "67")
+                    .param("id", "012")
                     .contentType(MediaType.APPLICATION_JSON)
                     .characterEncoding("utf-8")
                     .content(requestBody)
@@ -320,7 +276,7 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
             .andReturn();
 
     // assert
-    verify(recommendationRequestRepository, times(1)).findById(67L);
+    verify(recommendationRequestRepository, times(1)).findById(012L);
     verify(recommendationRequestRepository, times(1))
         .save(recommendationRequestEdited); // should be saved with
     // correct user
@@ -338,8 +294,8 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
 
     RecommendationRequest recommendationRequestEdited =
         RecommendationRequest.builder()
-            .requesterEmail("456@ucsb")
-            .professorEmail("231@ucsb")
+            .requesterEmail("123@ucsb")
+            .professorEmail("456@ucsb")
             .dateNeeded(ldt1)
             .dateRequested(ldt2)
             .explanation("PHD")
@@ -348,14 +304,14 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
 
     String requestBody = mapper.writeValueAsString(recommendationRequestEdited);
 
-    when(recommendationRequestRepository.findById(eq(67L))).thenReturn(Optional.empty());
+    when(recommendationRequestRepository.findById(eq(012L))).thenReturn(Optional.empty());
 
     // act
     MvcResult response =
         mockMvc
             .perform(
                 put("/api/recommendationRequest")
-                    .param("id", "67")
+                    .param("id", "012")
                     .contentType(MediaType.APPLICATION_JSON)
                     .characterEncoding("utf-8")
                     .content(requestBody)
@@ -364,9 +320,9 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
             .andReturn();
 
     // assert
-    verify(recommendationRequestRepository, times(1)).findById(67L);
+    verify(recommendationRequestRepository, times(1)).findById(012L);
     Map<String, Object> json = responseToJson(response);
-    assertEquals("RecommendationRequest with id 67 not found", json.get("message"));
+    assertEquals("RecommendationRequest with id 012 not found", json.get("message"));
   }
 
   @WithMockUser(roles = {"ADMIN", "USER"})
@@ -379,8 +335,8 @@ public class RecommendationRequestControllerTests extends ControllerTestCase {
 
     RecommendationRequest recommendationRequest1 =
         RecommendationRequest.builder()
-            .requesterEmail("456@ucsb")
-            .professorEmail("231@ucsb")
+            .requesterEmail("123@ucsb")
+            .professorEmail("456@ucsb")
             .dateNeeded(ldt1)
             .dateRequested(ldt2)
             .explanation("PHD")
